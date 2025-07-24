@@ -12,12 +12,14 @@ local function IsUsingAffectedWeapon()
 end
 
 local function IsShifting()
+    if IsControlPressed(0, 21) or IsControlJustPressed(0, 21) or IsControlJustReleased(0, 21) then return true end
     local plyped = cache.ped
-    return (not IsPedDeadOrDying(plyped)) and ((IsControlPressed(0, 21) or IsPedSprinting(plyped) or IsPedRunning(plyped)) and IsUsingAffectedWeapon()) 
+    if IsPedSprinting(plyped) or IsPedRunning(plyped) then return true end
+    return false
 end
 
 local function DisableCombatThisFrame()
-    if IsShifting() then
+    if IsShifting() and IsUsingAffectedWeapon() then
         DisablePlayerFiring(cache.playerId, true)
     end
 end
@@ -30,16 +32,14 @@ local function ShiftPunchProcess()
         local plyped = cache.ped
         local plyid = cache.playerId
 
-        if IsPedOnFoot(plyped) and (not IsPedSwimming(plyped)) and (not IsPedInAnyVehicle(plyped, true)) then
-            sleep = 500
-            local sprintstam = GetPlayerSprintStaminaRemaining(plyid)
-            local stam = 100 - sprintstam
-
+        if (not IsPedDeadOrDying(plyped)) and IsPedOnFoot(plyped) and (not IsPedSwimming(plyped)) and (not IsPedInAnyVehicle(plyped, true)) and IsUsingAffectedWeapon() then
+            sleep = 0
             if IsShifting() then
-                sleep = 0
-                local melee_light = IsControlJustReleased(0, 140)
-                local melee_heavy = IsControlJustReleased(0, 141)
-                local melee_alt = IsControlJustReleased(0, 142)
+                local sprintstam = GetPlayerSprintStaminaRemaining(plyid)
+                local stam = 100 - sprintstam
+                local melee_light = IsControlJustReleased(0, 140) or IsControlJustPressed(0, 140)
+                local melee_heavy = IsControlJustReleased(0, 141) or IsControlJustPressed(0, 141)
+                local melee_alt = IsControlJustReleased(0, 142) or IsControlJustPressed(0, 142)
                 if melee_light or melee_heavy or melee_alt then
                     if not IsPedRagdoll(plyped) then
                         if shiftpunch_allowed then
@@ -106,9 +106,7 @@ local function Init(config)
                         shiftpunch_allowed = true
                     end
                 else
-                    if IsShifting() then
-                        DisableCombatThisFrame()
-                    end
+                    DisableCombatThisFrame()
                 end
             else
                 sleep = 100
