@@ -1,6 +1,7 @@
 Config = Config or {}
 
 Config.Enabled = true -- Set false to disable the entire anti-shiftpunch system
+Config.MinDelay = 1.5 -- Minimum delay (seconds) between allowed shiftpunches (set to 0 or less to disable)
 Config.StaminaCost = 10.0 -- How much stamina should shift punching consume? MUST BE A FLOAT (0.0 to 100.0)
 Config.MinStamina = 20.0 -- How much stamina (minimum) must a player have in order to shift punch? MUST BE A FLOAT (0.0 to 100.0)
 Config.RagdollChance = 10 -- Chance (%) to fall over if trying to shiftpunch when stamina is too low

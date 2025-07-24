@@ -1,6 +1,7 @@
 
-local enabled, stamcost, minstam, ragdollchance, ragdolltime, weapons = false, 0, 0, 0, {Min=1.5,Max = 3.0}, {} -- do not touch
+local enabled, mindelay, stamcost, minstam, ragdollchance, ragdolltime, weapons = false, 0.0, 0.0, 0.0, 0, {Min=1.5,Max = 3.0}, {} -- do not touch
 local shiftpunch_allowed = true -- do not touch
+local last_shiftpunch = 0 -- do not touch
 
 local function IsUsingAffectedWeapon()
     local curwep = GetCurrentPedWeapon(cache.ped)
@@ -8,6 +9,17 @@ local function IsUsingAffectedWeapon()
     if curwep == `WEAPON_UNARMED` then return true end
     if weapons[curwep] then return true end
     return false
+end
+
+local function IsShifting()
+    local plyped = cache.ped
+    return (not IsPedDeadOrDying(plyped)) and ((IsControlPressed(0, 21) or IsPedSprinting(plyped) or IsPedRunning(plyped)) and IsUsingAffectedWeapon()) 
+end
+
+local function DisableCombatThisFrame()
+    if IsShifting() then
+        DisablePlayerFiring(cache.playerId, true)
+    end
 end
 
 local function ShiftPunchProcess()
@@ -23,7 +35,7 @@ local function ShiftPunchProcess()
             local sprintstam = GetPlayerSprintStaminaRemaining(plyid)
             local stam = 100 - sprintstam
 
-            if (IsControlPressed(0, 21) or IsPedSprinting(cache.ped) or IsPedRunning(cache.ped)) and IsUsingAffectedWeapon() and (not IsPedDeadOrDying(plyped)) then 
+            if IsShifting() then
                 sleep = 0
                 local melee_light = IsControlJustReleased(0, 140)
                 local melee_heavy = IsControlJustReleased(0, 141)
@@ -32,8 +44,12 @@ local function ShiftPunchProcess()
                     if not IsPedRagdoll(plyped) then
                         if shiftpunch_allowed then
                             SetPlayerStamina(plyid, math.max(0.0, stam - stamcost))
+                            last_shiftpunch = GetGameTimer()
+                            if mindelay > 0 then
+                                shiftpunch_allowed = false
+                            end
                         else
-                            if ragdollchance > 0 then
+                            if (ragdollchance > 0) and ((stam <= minstam) or (sprintstam >= (100.0 - minstam))) then
                                 if math.random(1,100) <= ragdollchance then
                                     SetPedToRagdoll(plyped, ragdolltime.Min * 1000, ragdolltime.Max * 1000, 0)
                                 end
@@ -56,6 +72,7 @@ end
 
 local function Init(config)
     enabled = config.Enabled
+    mindelay = config.MinDelay
     stamcost = config.StaminaCost
     minstam = config.MinStamina
     ragdollchance = config.RagdollChance
@@ -66,17 +83,43 @@ local function Init(config)
     CreateThread(function()
         while true do
             if not enabled then break end
+            local sleep = 0
+            local GT = GetGameTimer()
+            local delay = mindelay * 1000
+
             local sprintstam = GetPlayerSprintStaminaRemaining(cache.playerId)
             if not shiftpunch_allowed then
                 if sprintstam < (100.0 - minstam) then
-                    shiftpunch_allowed = true
+                    if delay > 0.0 then
+                        if last_shiftpunch > 0 then
+                            if GT >= (last_shiftpunch + delay) then
+                                shiftpunch_allowed = true
+                                last_shiftpunch = 0
+                                sleep = 100
+                            else
+                                DisableCombatThisFrame()
+                            end
+                        else
+                            shiftpunch_allowed = true
+                        end
+                    else
+                        shiftpunch_allowed = true
+                    end
                 else
-                    if (IsControlPressed(0, 21) or IsPedSprinting(cache.ped) or IsPedRunning(cache.ped)) and IsUsingAffectedWeapon() and (not IsPedDeadOrDying(cache.ped)) then
-                        DisablePlayerFiring(cache.playerId, true)
+                    if IsShifting() then
+                        DisableCombatThisFrame()
+                    end
+                end
+            else
+                sleep = 100
+                if (delay > 0) and (last_shiftpunch > 0) then
+                    if (last_shiftpunch + delay) > GT then
+                        shiftpunch_allowed = false
+                        DisableCombatThisFrame()
                     end
                 end
             end
-            Wait(0)
+            Wait(sleep)
         end
     end)
     CreateThread(ShiftPunchProcess)
