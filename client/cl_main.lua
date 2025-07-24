@@ -23,7 +23,7 @@ local function ShiftPunchProcess()
             local sprintstam = GetPlayerSprintStaminaRemaining(plyid)
             local stam = 100 - sprintstam
 
-            if IsControlPressed(0, 21) and IsUsingAffectedWeapon() and (not IsPedDeadOrDying(plyped)) then 
+            if (IsControlPressed(0, 21) or IsPedSprinting(cache.ped) or IsPedRunning(cache.ped)) and IsUsingAffectedWeapon() and (not IsPedDeadOrDying(plyped)) then 
                 sleep = 0
                 local melee_light = IsControlJustReleased(0, 140)
                 local melee_heavy = IsControlJustReleased(0, 141)
@@ -71,7 +71,7 @@ local function Init(config)
                 if sprintstam < (100.0 - minstam) then
                     shiftpunch_allowed = true
                 else
-                    if IsControlPressed(0, 21) and IsUsingAffectedWeapon() and (not IsPedDeadOrDying(cache.ped)) then
+                    if (IsControlPressed(0, 21) or IsPedSprinting(cache.ped) or IsPedRunning(cache.ped)) and IsUsingAffectedWeapon() and (not IsPedDeadOrDying(cache.ped)) then
                         DisablePlayerFiring(cache.playerId, true)
                     end
                 end
