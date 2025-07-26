@@ -1,4 +1,7 @@
 
+local IsControlJustPressed, IsControlJustReleased, IsControlPressed = IsControlJustPressed, IsControlJustReleased, IsControlPressed -- do not touch
+local GetCurrentPedWeapon, IsPedDeadOrDying, IsPedInAnyVehicle, IsPedOnFoot, IsPedRagdoll, IsPedRunning, IsPedSprinting, IsPedSwimming, SetPedToRagdoll = GetCurrentPedWeapon, IsPedDeadOrDying, IsPedInAnyVehicle, IsPedOnFoot, IsPedRagdoll, IsPedRunning, IsPedSprinting, IsPedSwimming, SetPedToRagdoll -- do not touch
+local DisablePlayerFiring, GetPlayerSprintStaminaRemaining, SetPlayerStamina, GetGameTimer, Wait = DisablePlayerFiring, GetPlayerSprintStaminaRemaining, SetPlayerStamina, GetGameTimer, Wait -- do not touch
 local enabled, mindelay, stamcost, minstam, ragdollchance, ragdolltime, weapons = false, 0.0, 0.0, 0.0, 0, {Min=1.5,Max = 3.0}, {} -- do not touch
 local shiftpunch_allowed = true -- do not touch
 local last_shiftpunch = 0 -- do not touch
